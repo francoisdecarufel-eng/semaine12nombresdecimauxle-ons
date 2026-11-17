@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Les Nombres Décimaux - 2e Cycle</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f0fdfa; /* Fond émeraude très clair */
+            touch-action: manipulation;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cacher les flèches dans les champs numériques */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Nous utilisons maintenant Tailwind pour les formes, on retire les anciens styles CSS des blocs */
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- COMPOSANTS VISUELS (Parfaitement à l'échelle) ---
+        const UniteShape = () => (
+            <div className="w-[100px] h-[100px] bg-blue-500 rounded-sm shadow-sm flex items-center justify-center border border-blue-600 box-border shrink-0">
+                <span className="text-white text-4xl font-black opacity-60">1</span>
+            </div>
+        );
+        
+        const DixiemeShape = () => (
+            <div className="w-[10px] h-[100px] bg-emerald-400 rounded-sm shadow-sm border border-emerald-600 box-border shrink-0"></div>
+        );
+        
+        const CentiemeShape = () => (
+            <div className="w-[10px] h-[10px] bg-rose-400 rounded-sm shadow-sm border border-rose-600 box-border shrink-0"></div>
+        );
+
+        const MatérielDisplay = ({ u, d, c }) => (
+            <div className="flex flex-wrap items-end justify-center min-h-[130px]">
+                {/* Entiers (Unités) */}
+                <div className="flex flex-wrap gap-2 justify-end mr-4">
+                    {Array.from({length: u}).map((_, i) => <UniteShape key={`u${i}`} />)}
+                </div>
+                
+                {/* La VIRGULE GÉANTE de séparation */}
+                <div className="text-7xl md:text-9xl font-black text-slate-800 leading-none mx-2 translate-y-3">,</div>
+                
+                {/* Décimales (Dixièmes et Centièmes) */}
+                <div className="flex gap-6 items-end pb-0 ml-4">
+                    {/* Dixièmes alignés côte à côte */}
+                    <div className="flex gap-[2px]">
+                        {Array.from({length: d}).map((_, i) => <DixiemeShape key={`d${i}`} />)}
+                    </div>
+                    {/* Centièmes empilés comme s'ils formaient une barre pour bien montrer l'échelle */}
+                    <div className="flex flex-col-reverse gap-[1px]">
+                        {Array.from({length: c}).map((_, i) => <CentiemeShape key={`c${i}`} />)}
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- ONGLET 1 : EXPLICATIONS ---
+        const OngletExplications = () => {
+            const [u, setU] = useState(1);
+            const [d, setD] = useState(3);
+            const [c, setC] = useState(5);
+
+            return (
+                <div className="fade-in space-y-8">
+                    <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-teal-100">
+                        <h2 className="text-3xl font-black text-teal-800 mb-4 flex items-center gap-3">
+                            <span>📚</span> La théorie
+                        </h2>
+                        <p className="text-xl md:text-2xl text-slate-700 leading-relaxed">
+                            Un nombre décimal est séparé en deux parties par une <strong>virgule géante</strong>. <br/>
+                            À gauche, c'est la partie <strong>entière</strong> (les unités). <br/>
+                            À droite, c'est la partie <strong>décimale</strong> (les morceaux plus petits qu'un : dixièmes, centièmes).<br/>
+                            <span className="text-emerald-700 text-lg mt-4 inline-block font-bold bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-inner">
+                                ✨ Observe bien : Tout est parfaitement à l'échelle ! 10 barres vertes de dixièmes peuvent exactement entrer dans le carré bleu de l'unité. Et 10 petits carrés roses empilés font exactement la taille d'une barre verte !
+                            </span>
+                        </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                            <div className="bg-blue-50 p-6 rounded-2xl border-2 border-blue-200 flex flex-col items-center text-center shadow-sm hover:shadow-md transition">
+                                <h3 className="text-2xl font-bold text-blue-800 mb-4">Unité (1)</h3>
+                                <div className="h-[120px] flex items-end justify-center pb-2"><UniteShape /></div>
+                                <p className="mt-4 text-blue-700 font-medium">Un entier complet<br/><span className="text-sm opacity-80">(100px par 100px)</span></p>
+                            </div>
+                            <div className="bg-emerald-50 p-6 rounded-2xl border-2 border-emerald-200 flex flex-col items-center text-center shadow-sm hover:shadow-md transition">
+                                <h3 className="text-2xl font-bold text-emerald-800 mb-4">Dixième (0,1)</h3>
+                                <div className="h-[120px] flex items-end justify-center pb-2"><DixiemeShape /></div>
+                                <p className="mt-4 text-emerald-700 font-medium">10 barres = 1 unité<br/><span className="text-sm opacity-80">(10px par 100px)</span></p>
+                            </div>
+                            <div className="bg-rose-50 p-6 rounded-2xl border-2 border-rose-200 flex flex-col items-center text-center shadow-sm hover:shadow-md transition">
+                                <h3 className="text-2xl font-bold text-rose-800 mb-4">Centième (0,01)</h3>
+                                <div className="h-[120px] flex items-end justify-center pb-2"><CentiemeShape /></div>
+                                <p className="mt-4 text-rose-700 font-medium">100 petits carrés = 1 unité<br/><span className="text-sm opacity-80">(10px par 10px)</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 md:p-8 rounded-3xl shadow-xl border border-indigo-100 text-center">
+                        <h2 className="text-3xl font-black text-indigo-800 mb-8 flex items-center justify-center gap-3">
+                            <span>🖐️</span> Manipulation Interactive
+                        </h2>
+                        
+                        <div className="bg-white/80 rounded-2xl p-6 mb-8 border border-white">
+                            <MatérielDisplay u={u} d={d} c={c} />
+                        </div>
+                        
+                        <div className="text-7xl font-black text-indigo-900 mb-8 drop-shadow-sm">
+                            {u},{d}{c}
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-4 md:gap-8">
+                            <div className="flex flex-col gap-3 w-40">
+                                <button onClick={() => setU((u + 1) % 5)} className="bg-emerald-500 text-white font-bold py-4 px-6 rounded-2xl text-xl shadow-lg hover:bg-emerald-600 active:scale-95 transition-transform">+1 Unité</button>
+                                <button onClick={() => setU(0)} className="text-emerald-700 font-medium hover:underline">Remettre à 0</button>
+                            </div>
+                            <div className="flex flex-col gap-3 w-40">
+                                <button onClick={() => setD((d + 1) % 10)} className="bg-blue-500 text-white font-bold py-4 px-6 rounded-2xl text-xl shadow-lg hover:bg-blue-600 active:scale-95 transition-transform">+1 Dixième</button>
+                                <button onClick={() => setD(0)} className="text-blue-700 font-medium hover:underline">Remettre à 0</button>
+                            </div>
+                            <div className="flex flex-col gap-3 w-40">
+                                <button onClick={() => setC((c + 1) % 10)} className="bg-rose-500 text-white font-bold py-4 px-6 rounded-2xl text-xl shadow-lg hover:bg-rose-600 active:scale-95 transition-transform">+1 Centième</button>
+                                <button onClick={() => setC(0)} className="text-rose-700 font-medium hover:underline">Remettre à 0</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ONGLET 2 : PRATIQUE (REPRÉSENTER) ---
+        const OngletPratique1 = () => {
+            const [questions, setQuestions] = useState([]);
+            const [qIndex, setQIndex] = useState(0);
+            const [score, setScore] = useState(0);
+            const [status, setStatus] = useState('playing'); // playing, correct, incorrect, finished
+            const [selectedOpt, setSelectedOpt] = useState(null);
+
+            const initGame = () => {
+                let qs = [];
+                for(let i=0; i<10; i++) {
+                    let u = Math.floor(Math.random() * 4);
+                    let d = Math.floor(Math.random() * 10);
+                    let c = Math.floor(Math.random() * 10);
+                    if(u===0 && d===0 && c===0) u = 1;
+                    
+                    let correct = `${u},${d}${c}`;
+                    if(c===0) correct = `${u},${d}`; 
+
+                    let options = new Set([correct]);
+                    while(options.size < 4) {
+                        let wu = Math.floor(Math.random() * 4);
+                        let wd = Math.floor(Math.random() * 10);
+                        let wc = Math.floor(Math.random() * 10);
+                        let wrong = wc === 0 ? `${wu},${wd}` : `${wu},${wd}${wc}`;
+                        options.add(wrong);
+                    }
+                    qs.push({ u, d, c, correct, options: Array.from(options).sort(() => Math.random() - 0.5) });
+                }
+                setQuestions(qs);
+                setQIndex(0);
+                setScore(0);
+                setStatus('playing');
+                setSelectedOpt(null);
+            };
+
+            useEffect(() => { initGame(); }, []);
+
+            if (questions.length === 0) return null;
+
+            if (status === 'finished') {
+                return (
+                    <div className="fade-in bg-white rounded-3xl shadow-xl p-12 text-center border-4 border-indigo-100">
+                        <div className="text-6xl mb-6">🏆</div>
+                        <h2 className="text-4xl font-black text-indigo-800 mb-6">Mission Accomplie !</h2>
+                        <p className="text-2xl text-slate-600 mb-8">Ton score final est de</p>
+                        <div className="text-6xl font-black text-emerald-500 mb-10">{score} / 10</div>
+                        <button onClick={initGame} className="bg-indigo-600 text-white font-bold py-4 px-10 rounded-full text-2xl shadow-xl hover:bg-indigo-700 active:scale-95 transition-transform">
+                            Rejouer
+                        </button>
+                    </div>
+                );
+            }
+
+            const q = questions[qIndex];
+
+            const handleAnswer = (ans) => {
+                if(status !== 'playing') return;
+                setSelectedOpt(ans);
+                if(ans === q.correct) {
+                    setScore(score + 1);
+                    setStatus('correct');
+                } else {
+                    setStatus('incorrect');
+                }
+            };
+
+            const nextQuestion = () => {
+                if (qIndex + 1 < questions.length) {
+                    setQIndex(qIndex + 1);
+                    setStatus('playing');
+                    setSelectedOpt(null);
+                } else {
+                    setStatus('finished');
+                }
+            };
+
+            return (
+                <div className="fade-in max-w-4xl mx-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="text-xl font-bold text-indigo-700 bg-indigo-100 px-6 py-2 rounded-full">Question {qIndex + 1} / 10</div>
+                        <div className="text-xl font-bold text-emerald-700 bg-emerald-100 px-6 py-2 rounded-full">Score: {score}</div>
+                    </div>
+
+                    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-slate-100 text-center">
+                        <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-8">Quel nombre est représenté ici ?</h3>
+                        
+                        <div className="bg-slate-50 p-6 md:p-10 rounded-2xl mb-10 border-2 border-dashed border-slate-200 min-h-[160px] flex items-center justify-center">
+                            <MatérielDisplay u={q.u} d={q.d} c={q.c} />
+                        </div>
+
+                        {status === 'correct' && (
+                            <div className="fade-in bg-emerald-100 border-4 border-emerald-400 text-emerald-800 p-6 rounded-2xl mb-8 flex flex-col items-center">
+                                <span className="text-3xl font-black mb-4">✅ Bravo ! Bonne réponse !</span>
+                                <button onClick={nextQuestion} className="bg-emerald-600 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-emerald-700 transition">Question suivante ➔</button>
+                            </div>
+                        )}
+                        {status === 'incorrect' && (
+                            <div className="fade-in bg-rose-100 border-4 border-rose-400 text-rose-800 p-6 rounded-2xl mb-8 flex flex-col items-center">
+                                <span className="text-3xl font-black mb-4">❌ Oups ! La bonne réponse était {q.correct}.</span>
+                                <button onClick={nextQuestion} className="bg-rose-600 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-rose-700 transition">Continuer ➔</button>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4 md:gap-6">
+                            {q.options.map((opt, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => handleAnswer(opt)}
+                                    disabled={status !== 'playing'}
+                                    className={`py-6 md:py-8 text-3xl md:text-5xl font-black rounded-2xl shadow-md border-b-8 transition-all ${
+                                        status !== 'playing'
+                                            ? opt === q.correct 
+                                                ? 'bg-emerald-500 text-white border-emerald-700' 
+                                                : opt === selectedOpt
+                                                    ? 'bg-rose-500 text-white border-rose-700'
+                                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                            : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:-translate-y-1 active:translate-y-2 active:border-b-0'
+                                    }`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ONGLET 3 : PRATIQUE (LIRE ET ÉCRIRE) ---
+        const OngletPratique2 = () => {
+            const [q, setQ] = useState(null);
+            const [status, setStatus] = useState('playing'); // playing, correct, incorrect
+            const [selectedOpt, setSelectedOpt] = useState(null);
+
+            const generateQuestion = () => {
+                const types = [
+                    // Lecture
+                    () => {
+                        let u = Math.floor(Math.random() * 20);
+                        let c = Math.floor(Math.random() * 9) + 1;
+                        let correct = `${u},0${c}`;
+                        let options = [correct, `${u},${c}`, `${u}0,${c}`, `0,${u}${c}`].sort(() => Math.random() - 0.5);
+                        return { text: `Quel est le nombre : "${u} unités et ${c} centièmes" ?`, correct, options };
+                    },
+                    // Écriture
+                    () => {
+                        let u = Math.floor(Math.random() * 15);
+                        let d = Math.floor(Math.random() * 9) + 1;
+                        let correct = `${u} unités et ${d} dixièmes`;
+                        let options = [correct, `${u} unités et ${d} centièmes`, `${d} unités et ${u} dixièmes`, `${u} dizaines et ${d} unités`].sort(() => Math.random() - 0.5);
+                        return { text: `Comment se lit le nombre : ${u},${d} ?`, correct, options };
+                    },
+                    // Décomposition
+                    () => {
+                        let diz = Math.floor(Math.random() * 9) + 1;
+                        let uni = Math.floor(Math.random() * 9);
+                        let dix = Math.floor(Math.random() * 9) + 1;
+                        let correct = `${diz*10} + ${uni} + 0,${dix}`;
+                        let options = [correct, `${diz*10} + ${uni} + ${dix}`, `${diz} + ${uni} + 0,${dix}`, `${diz*10} + 0,${uni} + 0,0${dix}`].sort(() => Math.random() - 0.5);
+                        return { text: `Décompose le nombre : ${diz*10 + uni},${dix}`, correct, options };
+                    }
+                ];
+                setQ(types[Math.floor(Math.random() * types.length)]());
+                setStatus('playing');
+                setSelectedOpt(null);
+            };
+
+            useEffect(() => { generateQuestion(); }, []);
+
+            if(!q) return null;
+
+            return (
+                <div className="fade-in max-w-4xl mx-auto">
+                    <div className="bg-amber-50 p-8 md:p-12 rounded-3xl shadow-xl border border-amber-200 text-center">
+                        <h2 className="text-3xl md:text-4xl font-black text-amber-900 mb-10 leading-tight">{q.text}</h2>
+
+                        {status === 'correct' && (
+                            <div className="fade-in bg-emerald-100 border-4 border-emerald-400 text-emerald-800 p-6 rounded-2xl mb-8 flex flex-col items-center">
+                                <span className="text-3xl font-black mb-4">✅ Fantastique !</span>
+                                <button onClick={generateQuestion} className="bg-emerald-600 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-emerald-700 transition">Défi suivant ➔</button>
+                            </div>
+                        )}
+                        {status === 'incorrect' && (
+                            <div className="fade-in bg-rose-100 border-4 border-rose-400 text-rose-800 p-6 rounded-2xl mb-8 flex flex-col items-center">
+                                <span className="text-3xl font-black mb-4">❌ Pas tout à fait... La réponse était : {q.correct}</span>
+                                <button onClick={generateQuestion} className="bg-rose-600 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-rose-700 transition">Réessayer un autre ➔</button>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {q.options.map((opt, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => {
+                                        if(status !== 'playing') return;
+                                        setSelectedOpt(opt);
+                                        setStatus(opt === q.correct ? 'correct' : 'incorrect');
+                                    }}
+                                    disabled={status !== 'playing'}
+                                    className={`p-6 text-xl md:text-2xl font-bold rounded-2xl shadow-md border-b-8 transition-all ${
+                                        status !== 'playing'
+                                            ? opt === q.correct 
+                                                ? 'bg-emerald-500 text-white border-emerald-700' 
+                                                : opt === selectedOpt
+                                                    ? 'bg-rose-500 text-white border-rose-700'
+                                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                            : 'bg-white text-amber-800 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:-translate-y-1 active:translate-y-2 active:border-b-0'
+                                    }`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ONGLET 4 : TABLEAU DE NUMÉRATION ---
+        const OngletTableau = () => {
+            const [val, setVal] = useState({ c: "", d: "", u: "", dix: "", cent: "" });
+
+            const handleChange = (field, event) => {
+                let v = event.target.value;
+                if(v.length > 1) v = v.slice(-1); // Seulement un chiffre
+                if(!/^\d*$/.test(v)) return; // Seulement des nombres
+                setVal({...val, [field]: v});
+            };
+
+            const getEntier = () => parseInt(val.c + val.d + val.u || "0", 10);
+            
+            let numStr = "";
+            let lectureStr = "";
+
+            const entier = getEntier();
+            const dixStr = val.dix || "0";
+            const centStr = val.cent || "0";
+
+            if (val.c !== "" || val.d !== "" || val.u !== "") numStr += entier.toString();
+            else numStr += "0";
+
+            if (val.dix !== "" || val.cent !== "") {
+                numStr += "," + dixStr;
+                if (val.cent !== "") numStr += val.cent;
+            }
+
+            // Générer le texte de lecture (Adapté 2e cycle)
+            if (val.cent !== "") {
+                lectureStr = `${entier} unités et ${parseInt(dixStr+centStr, 10)} centièmes`;
+            } else if (val.dix !== "") {
+                lectureStr = `${entier} unités et ${parseInt(dixStr, 10)} dixièmes`;
+            } else {
+                lectureStr = `${entier} unités`;
+            }
+
+            return (
+                <div className="fade-in">
+                    <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-200 max-w-5xl mx-auto text-center">
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-8">Place les chiffres pour construire ton nombre décimal !</h2>
+                        
+                        <div className="overflow-x-auto pb-4">
+                            <div className="min-w-[800px] flex mx-auto justify-center">
+                                {/* Partie Entière */}
+                                <div className="flex bg-amber-100 rounded-l-2xl border-4 border-amber-300 p-2 gap-2 flex-1">
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <div className="bg-amber-500 text-white font-bold p-2 md:p-4 rounded-xl shadow text-lg leading-tight">Centaines<br/><span className="text-sm opacity-80">(100)</span></div>
+                                        <input type="number" value={val.c} onChange={(e)=>handleChange('c', e)} className="w-full text-center text-5xl md:text-7xl font-black text-amber-900 p-4 rounded-xl border-2 border-amber-200 bg-white focus:outline-none focus:border-amber-500" placeholder="0"/>
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <div className="bg-amber-500 text-white font-bold p-2 md:p-4 rounded-xl shadow text-lg leading-tight">Dizaines<br/><span className="text-sm opacity-80">(10)</span></div>
+                                        <input type="number" value={val.d} onChange={(e)=>handleChange('d', e)} className="w-full text-center text-5xl md:text-7xl font-black text-amber-900 p-4 rounded-xl border-2 border-amber-200 bg-white focus:outline-none focus:border-amber-500" placeholder="0"/>
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <div className="bg-amber-500 text-white font-bold p-2 md:p-4 rounded-xl shadow text-lg leading-tight">Unités<br/><span className="text-sm opacity-80">(1)</span></div>
+                                        <input type="number" value={val.u} onChange={(e)=>handleChange('u', e)} className="w-full text-center text-5xl md:text-7xl font-black text-amber-900 p-4 rounded-xl border-2 border-amber-200 bg-white focus:outline-none focus:border-amber-500" placeholder="0"/>
+                                    </div>
+                                </div>
+                                
+                                {/* Virgule */}
+                                <div className="w-16 md:w-24 bg-slate-800 text-white font-black text-7xl md:text-9xl flex items-end justify-center pb-8 z-10 shadow-2xl">,</div>
+                                
+                                {/* Partie Décimale */}
+                                <div className="flex bg-indigo-100 rounded-r-2xl border-4 border-l-0 border-indigo-300 p-2 gap-2 flex-[0.66]">
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <div className="bg-indigo-500 text-white font-bold p-2 md:p-4 rounded-xl shadow text-lg leading-tight">Dixièmes<br/><span className="text-sm opacity-80">(0,1)</span></div>
+                                        <input type="number" value={val.dix} onChange={(e)=>handleChange('dix', e)} className="w-full text-center text-5xl md:text-7xl font-black text-indigo-900 p-4 rounded-xl border-2 border-indigo-200 bg-white focus:outline-none focus:border-indigo-500" placeholder="0"/>
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <div className="bg-indigo-500 text-white font-bold p-2 md:p-4 rounded-xl shadow text-lg leading-tight">Centièmes<br/><span className="text-sm opacity-80">(0,01)</span></div>
+                                        <input type="number" value={val.cent} onChange={(e)=>handleChange('cent', e)} className="w-full text-center text-5xl md:text-7xl font-black text-indigo-900 p-4 rounded-xl border-2 border-indigo-200 bg-white focus:outline-none focus:border-indigo-500" placeholder="0"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 bg-slate-50 p-8 rounded-3xl border-4 border-slate-200">
+                            <h3 className="text-2xl text-slate-500 font-bold uppercase tracking-widest mb-4">Lecture du nombre</h3>
+                            <div className="text-6xl md:text-8xl font-black text-slate-800 mb-8">{numStr}</div>
+                            <div className="text-2xl md:text-4xl text-indigo-700 font-bold bg-indigo-50 inline-block px-8 py-4 rounded-full border-2 border-indigo-200">
+                                "{lectureStr}"
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setVal({c:"", d:"", u:"", dix:"", cent:""})}
+                            className="mt-8 bg-rose-500 hover:bg-rose-600 text-white font-bold text-xl px-8 py-4 rounded-full shadow-lg active:scale-95 transition-transform"
+                        >
+                            🗑️ Effacer tout
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- APPLICATION PRINCIPALE ---
+        const App = () => {
+            const [tab, setTab] = useState(1);
+            
+            const menus = [
+                { id: 1, nom: "📖 1. Explications" },
+                { id: 2, nom: "🎯 2. Représenter" },
+                { id: 3, nom: "📝 3. Lire et Écrire" },
+                { id: 4, nom: "🧮 4. Tableau interactif" }
+            ];
+
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col">
+                    <header className="text-center mb-10 mt-4">
+                        <h1 className="text-4xl md:text-6xl font-black text-teal-800 mb-4 tracking-tight drop-shadow-sm">
+                            🌟 Les Nombres Décimaux
+                        </h1>
+                        <p className="text-xl md:text-2xl text-teal-600 font-bold">Apprendre et s'amuser au 2e cycle !</p>
+                    </header>
+                    
+                    <nav className="flex flex-wrap justify-center gap-4 mb-10">
+                        {menus.map(m => (
+                            <button 
+                                key={m.id}
+                                onClick={() => setTab(m.id)}
+                                className={`px-6 py-4 rounded-2xl text-lg md:text-2xl font-black transition-all shadow-md ${
+                                    tab === m.id 
+                                    ? 'bg-teal-600 text-white scale-105 ring-4 ring-teal-300' 
+                                    : 'bg-white text-teal-700 hover:bg-teal-50 border-2 border-teal-200 hover:-translate-y-1'
+                                }`}
+                            >
+                                {m.nom}
+                            </button>
+                        ))}
+                    </nav>
+                    
+                    <main className="flex-grow">
+                        {tab === 1 && <OngletExplications />}
+                        {tab === 2 && <OngletPratique1 />}
+                        {tab === 3 && <OngletPratique2 />}
+                        {tab === 4 && <OngletTableau />}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
